@@ -63,8 +63,10 @@
         function setTheme(theme) {
           if (theme === "dark") {
             document.documentElement.classList.add("dark");
+            document.documentElement.classList.add("theme--dark");
           } else {
             document.documentElement.classList.remove("dark");
+            document.documentElement.classList.remove("theme--dark");
           }
         }
 
@@ -86,7 +88,8 @@
       }
     </script>
     <style>
-      html.dark {
+      html.dark,
+      html.theme--dark {
         background-color: #121212;
         color: #fff;
       }
