@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Excalidraw — full light / dark theme</title>
+    <meta name="theme-color" content="#121212" />
+    <meta
+      name="description"
+      content="Excalidraw theme demo: the entire interface switches to light or dark with no mixed-theme surfaces."
+    />
+    <!-- Apply the stored theme before first paint to avoid a light flash. -->
+    <script>
+      try {
+        var stored = window.localStorage.getItem("excalidraw-theme") || "system";
+        var resolved =
+          stored === "system"
+            ? window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light"
+            : stored;
+        if (resolved === "dark") {
+          document.documentElement.classList.add("dark", "theme--dark");
+        }
+      } catch (e) {}
+    </script>
+    <style>
+      :root {
+        --ui-font: Assistant, system-ui, -apple-system, "Segoe UI", Roboto,
+          sans-serif;
+        --radius-sm: 0.375rem;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --shadow-island: 0 0 0 1px rgba(0, 0, 0, 0.06),
+          0 2px 4px rgba(0, 0, 0, 0.06), 0 12px 24px rgba(0, 0, 0, 0.08);
+        --shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.28);
+
+        /* light palette */
+        --color-primary: #6965db;
+        --color-primary-hover: #5753d0;
+        --color-primary-darker: #5b57d1;
+        --color-on-surface: #1e1e1e;
+        --color-surface-lowest: #ffffff;
+        --color-surface-low: #f5f5f5;
+        --color-surface-mid: #ebebeb;
+        --color-surface-high: #d6d6d6;
+        --color-surface-primary-container: #e0dfff;
+        --island-bg-color: #ffffff;
+        --default-bg-color: #ffffff;
+        --input-bg-color: #ffffff;
+        --input-border-color: #d6d6d6;
+        --dialog-border-color: #d6d6d6;
+        --sidebar-bg-color: #ffffff;
+        --sidebar-border-color: #ebebeb;
+        --color-border-outline: #767680;
+        --color-gray-30: #d6d6d6;
+        --color-gray-20: #ebebeb;
+        --color-gray-40: #b8b8b8;
+        --color-success: #d3ffd2;
+        --color-success-text: #0b6513;
+        --color-warning: #fceeca;
+        --color-text-warning: #3d3d3d;
+        --text-primary-color: #1e1e1e;
+        --color-muted: #7a7a7a;
+        --overlay-bg: rgba(0, 0, 0, 0.42);
+        --grid-line: rgba(0, 0, 0, 0.06);
+      }
+
+      html.theme--dark {
+        /* dark palette — every surface overridden, nothing left light */
+        --color-primary: #726dff;
+        --color-primary-hover: #bbb8ff;
+        --color-primary-darker: #5b57d1;
+        --color-on-surface: #e3e3e8;
+        --color-surface-lowest: #121212;
+        --color-surface-low: #1b1b20;
+        --color-surface-mid: #232329;
+        --color-surface-high: #2e2d39;
+        --color-surface-primary-container: #403e6a;
+        --island-bg-color: #232329;
+        --default-bg-color: #121212;
+        --input-bg-color: #121212;
+        --input-border-color: #2e2e2e;
+        --dialog-border-color: #3d3d3d;
+        --sidebar-bg-color: #1b1b20;
+        --sidebar-border-color: #2e2d39;
+        --color-border-outline: #8e8d9c;
+        --color-gray-30: #4a4a55;
+        --color-gray-20: #383842;
+        --color-gray-40: #6b6b78;
+        --color-success: #0b3d1e;
+        --color-success-text: #9df0b0;
+        --color-warning: #4a3a12;
+        --color-text-warning: #fceeca;
+        --text-primary-color: #e3e3e8;
+        --color-muted: #a1a1ac;
+        --overlay-bg: rgba(0, 0, 0, 0.66);
+        --grid-line: rgba(255, 255, 255, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--ui-font);
+        background: var(--default-bg-color);
+        color: var(--text-primary-color);
+        transition: background-color 0.18s ease, color 0.18s ease;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0.75rem;
+        gap: 0.75rem;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        background: var(--island-bg-color);
+        border: 1px solid var(--color-gray-20);
+        border-radius: var(--radius-lg);
+        padding: 0.5rem 0.6rem;
+        box-shadow: var(--shadow-island);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-right: auto;
+        min-width: 0;
+      }
+
+      .brand svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        flex: none;
+        color: var(--color-primary);
+      }
+
+      .brand span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .segmented {
+        display: inline-flex;
+        padding: 0.15rem;
+        gap: 0.15rem;
+        background: var(--color-surface-low);
+        border: 1px solid var(--color-gray-20);
+        border-radius: var(--radius-md);
+      }
+
+      .segmented button {
+        font: inherit;
+        font-size: 0.8rem;
+        min-height: 44px;
+        padding: 0 0.7rem;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-primary-color);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .segmented button[aria-pressed="true"] {
+        background: var(--color-primary);
+        color: #fff;
+      }
+
+      .segmented button:focus-visible,
+      .tool:focus-visible,
+      .btn:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        flex: 1;
+        min-height: 0;
+      }
+
+      @media (min-width: 780px) {
+        .workspace {
+          grid-template-columns: 1fr 260px;
+        }
+      }
+
+      .canvas-wrap {
+        position: relative;
+        background: var(--default-bg-color);
+        border: 1px solid var(--color-gray-20);
+        border-radius: var(--radius-lg);
+        min-height: 340px;
+        overflow: hidden;
+        background-image: radial-gradient(
+          var(--grid-line) 1px,
+          transparent 1px
+        );
+        background-size: 18px 18px;
+      }
+
+      .toolbar {
+        position: absolute;
+        top: 0.6rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.15rem;
+        padding: 0.25rem;
+        background: var(--island-bg-color);
+        border: 1px solid var(--color-gray-20);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-island);
+      }
+
+      .tool {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-primary-color);
+        cursor: pointer;
+      }
+
+      .tool[aria-pressed="true"] {
+        background: var(--color-surface-primary-container);
+        color: var(--color-primary);
+      }
+
+      .tool svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .zoom-footer {
+        position: absolute;
+        bottom: 0.6rem;
+        left: 0.6rem;
+        display: flex;
+        gap: 0.15rem;
+        padding: 0.2rem;
+        background: var(--island-bg-color);
+        border: 1px solid var(--color-gray-20);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-island);
+      }
+
+      .zoom-footer .tool {
+        width: 32px;
+        height: 32px;
+      }
+
+      .sidebar {
+        background: var(--sidebar-bg-color);
+        border: 1px solid var(--sidebar-border-color);
+        border-radius: var(--radius-lg);
+        padding: 0.75rem;
+        box-shadow: var(--shadow-island);
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .sidebar h2 {
+        margin: 0;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-muted);
+        font-weight: 600;
+      }
+
+      .swatches {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+
+      .swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid var(--color-gray-30);
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        color: var(--color-muted);
+      }
+
+      .field input {
+        font: inherit;
+        font-size: 0.85rem;
+        min-height: 44px;
+        padding: 0 0.6rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--input-border-color);
+        background: var(--input-bg-color);
+        color: var(--text-primary-color);
+      }
+
+      .btn {
+        font: inherit;
+        font-size: 0.875rem;
+        min-height: 44px;
+        padding: 0 0.9rem;
+        border-radius: var(--radius-md);
+        border: none;
+        background: var(--color-primary);
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background: var(--color-primary-hover);
+      }
+
+      .btn.secondary {
+        background: var(--color-surface-low);
+        color: var(--text-primary-color);
+        border: 1px solid var(--color-gray-20);
+      }
+
+      .btn.secondary:hover {
+        background: var(--color-surface-mid);
+      }
+
+      .note {
+        font-size: 0.78rem;
+        line-height: 1.45;
+        padding: 0.6rem 0.7rem;
+        border-radius: var(--radius-md);
+        background: var(--color-surface-low);
+        border: 1px solid var(--color-gray-20);
+        color: var(--text-primary-color);
+      }
+
+      .note strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+        background: var(--color-success);
+        color: var(--color-success-text);
+      }
+
+      /* modal / portal surface */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--overlay-bg);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 50;
+      }
+
+      .overlay[data-open="true"] {
+        display: flex;
+      }
+
+      .modal {
+        position: relative;
+        width: 100%;
+        max-width: 380px;
+        max-height: 90vh;
+        overflow: auto;
+        background: var(--island-bg-color);
+        color: var(--text-primary-color);
+        border: 1px solid var(--dialog-border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-modal);
+        padding: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .modal h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .modal p {
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        color: var(--color-muted);
+      }
+
+      .qr-box {
+        align-self: center;
+        padding: 0.75rem;
+        background: var(--island-bg-color);
+        border: 1px solid var(--color-gray-30);
+        border-radius: var(--radius-md);
+      }
+
+      .qr-box svg {
+        display: block;
+        width: 150px;
+        height: 150px;
+      }
+
+      .close {
+        position: absolute;
+        top: 0.35rem;
+        right: 0.35rem;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-primary-color);
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        background: var(--color-surface-low);
+      }
+
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .row > * {
+        flex: 1 1 8rem;
+      }
+
+      .footer {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        text-align: center;
+        padding: 0.25rem 0 0.5rem;
+      }
+
+      .footer a {
+        color: var(--color-primary);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M3 17.5 7.5 6l4 8 3-5.5L21 18"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>Excalidraw — full theme</span>
+        </div>
+
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme="light" aria-pressed="false">
+            ☀︎ Light
+          </button>
+          <button type="button" data-theme="dark" aria-pressed="false">
+            ☾ Dark
+          </button>
+          <button type="button" data-theme="system" aria-pressed="false">
+            ⌂ System
+          </button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <section class="canvas-wrap" aria-label="Canvas preview">
+          <div class="toolbar" role="toolbar" aria-label="Drawing tools">
+            <button class="tool" aria-pressed="true" aria-label="Hand tool">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V11m0 .5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5v-1a1.5 1.5 0 0 1 3 0"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button class="tool" aria-pressed="false" aria-label="Rectangle">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect
+                  x="4"
+                  y="6"
+                  width="16"
+                  height="12"
+                  rx="1.5"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                />
+              </svg>
+            </button>
+            <button class="tool" aria-pressed="false" aria-label="Ellipse">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <ellipse
+                  cx="12"
+                  cy="12"
+                  rx="8"
+                  ry="6"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                />
+              </svg>
+            </button>
+            <button class="tool" aria-pressed="false" aria-label="Arrow">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M5 18 18 6m0 0h-5m5 0v5"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button class="tool" aria-pressed="false" aria-label="Text">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M5 6h14M12 6v12"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div class="zoom-footer">
+            <button class="tool" aria-label="Zoom out">−</button>
+            <button class="tool" aria-label="Zoom in">+</button>
+          </div>
+        </section>
+
+        <aside class="sidebar" aria-label="Properties">
+          <h2>Stroke</h2>
+          <div class="swatches">
+            <span class="swatch" style="background: #1e1e1e"></span>
+            <span class="swatch" style="background: #db6965"></span>
+            <span class="swatch" style="background: #6965db"></span>
+            <span class="swatch" style="background: #2f9e44"></span>
+            <span class="swatch" style="background: #e8a33d"></span>
+          </div>
+
+          <h2>Label</h2>
+          <label class="field">
+            Element name
+            <input type="text" value="Architecture draft" />
+          </label>
+
+          <button class="btn" type="button" data-open-modal="share">
+            Share link
+          </button>
+          <button class="btn secondary" type="button" data-open-modal="qr">
+            Open QR dialog
+          </button>
+
+          <div class="note">
+            <strong>Same variables everywhere<span class="badge">✓</span></strong>
+            Canvas, toolbar, sidebar, inputs, dialogs and the QR box all read
+            <code>--island-bg-color</code> / <code>--color-on-surface</code>.
+            Switching the theme flips every surface at once — no mixed panels.
+          </div>
+        </aside>
+      </div>
+
+      <p class="footer">
+        Full Excalidraw app with this theme fix:
+        <a href="https://excalidraw-plus-theme.onrender.com"
+          >excalidraw-plus-theme.onrender.com</a
+        >
+      </p>
+    </div>
+
+    <!-- Portal-style overlay: receives the same theme variables -->
+    <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="modal">
+        <button class="close" type="button" aria-label="Close">×</button>
+        <h3 id="dialogTitle">Share this scene</h3>
+        <p id="dialogBody">
+          Anyone with the link can view and edit. End-to-end encrypted.
+        </p>
+        <div class="qr-box" id="qrBox" aria-label="QR code">
+          <svg viewBox="0 0 150 150" role="img" aria-label="QR code">
+            <rect width="150" height="150" fill="#ffffff" />
+            <g fill="#111111">
+              <rect x="10" y="10" width="34" height="34" />
+              <rect x="18" y="18" width="18" height="18" fill="#ffffff" />
+              <rect x="22" y="22" width="10" height="10" />
+              <rect x="106" y="10" width="34" height="34" />
+              <rect x="114" y="18" width="18" height="18" fill="#ffffff" />
+              <rect x="118" y="22" width="10" height="10" />
+              <rect x="10" y="106" width="34" height="34" />
+              <rect x="18" y="114" width="18" height="18" fill="#ffffff" />
+              <rect x="22" y="118" width="10" height="10" />
+              <rect x="56" y="12" width="8" height="8" />
+              <rect x="72" y="12" width="8" height="8" />
+              <rect x="88" y="20" width="8" height="8" />
+              <rect x="56" y="28" width="8" height="8" />
+              <rect x="72" y="36" width="8" height="8" />
+              <rect x="88" y="44" width="8" height="8" />
+              <rect x="56" y="52" width="8" height="8" />
+              <rect x="72" y="60" width="8" height="8" />
+              <rect x="88" y="68" width="8" height="8" />
+              <rect x="12" y="56" width="8" height="8" />
+              <rect x="28" y="64" width="8" height="8" />
+              <rect x="44" y="72" width="8" height="8" />
+              <rect x="60" y="80" width="8" height="8" />
+              <rect x="76" y="88" width="8" height="8" />
+              <rect x="92" y="96" width="8" height="8" />
+              <rect x="108" y="104" width="8" height="8" />
+              <rect x="124" y="112" width="8" height="8" />
+              <rect x="60" y="120" width="8" height="8" />
+              <rect x="80" y="128" width="8" height="8" />
+              <rect x="100" y="120" width="8" height="8" />
+              <rect x="120" y="132" width="8" height="8" />
+            </g>
+          </svg>
+        </div>
+        <div class="row">
+          <button class="btn secondary" type="button" data-close>Cancel</button>
+          <button class="btn" type="button" data-close>Copy link</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var html = document.documentElement;
+        var STORAGE_KEY = "excalidraw-theme";
+        var mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function stored() {
+          return window.localStorage.getItem(STORAGE_KEY) || "system";
+        }
+
+        function resolve(pref) {
+          if (pref === "system") {
+            return mq.matches ? "dark" : "light";
+          }
+          return pref === "dark" ? "dark" : "light";
+        }
+
+        function apply(pref) {
+          var resolved = resolve(pref);
+          html.classList.toggle("dark", resolved === "dark");
+          html.classList.toggle("theme--dark", resolved === "dark");
+          html.setAttribute("data-theme", resolved);
+
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute(
+              "content",
+              resolved === "dark" ? "#121212" : "#ffffff",
+            );
+          }
+
+          document.querySelectorAll("[data-theme]").forEach(function (btn) {
+            if (btn.tagName !== "BUTTON") {
+              return;
+            }
+            btn.setAttribute(
+              "aria-pressed",
+              String(btn.getAttribute("data-theme") === pref),
+            );
+          });
+        }
+
+        function setTheme(pref) {
+          window.localStorage.setItem(STORAGE_KEY, pref);
+          apply(pref);
+        }
+
+        document.querySelectorAll("button[data-theme]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            setTheme(btn.getAttribute("data-theme"));
+          });
+        });
+
+        mq.addEventListener("change", function () {
+          if (stored() === "system") {
+            apply("system");
+          }
+        });
+
+        var overlay = document.getElementById("overlay");
+        var body = document.getElementById("dialogBody");
+        var title = document.getElementById("dialogTitle");
+        var qrBox = document.getElementById("qrBox");
+
+        function openModal(kind) {
+          if (kind === "share") {
+            title.textContent = "Share this scene";
+            body.textContent =
+              "Anyone with the link can view and edit. End-to-end encrypted.";
+            qrBox.style.display = "none";
+          } else {
+            title.textContent = "Share room link";
+            body.textContent =
+              "The QR box uses island-bg + border-gray-30 — the exact fix applied to ShareDialog.scss.";
+            qrBox.style.display = "";
+          }
+          overlay.setAttribute("data-open", "true");
+        }
+
+        function closeModal() {
+          overlay.setAttribute("data-open", "false");
+        }
+
+        document.querySelectorAll("[data-open-modal]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            openModal(btn.getAttribute("data-open-modal"));
+          });
+        });
+
+        document.querySelectorAll("[data-close], .close").forEach(function (btn) {
+          btn.addEventListener("click", closeModal);
+        });
+
+        overlay.addEventListener("click", function (event) {
+          if (event.target === overlay) {
+            closeModal();
+          }
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape") {
+            closeModal();
+          }
+        });
+
+        document.querySelectorAll(".tool").forEach(function (tool) {
+          if (tool.hasAttribute("aria-pressed")) {
+            tool.addEventListener("click", function () {
+              document.querySelectorAll(".tool").forEach(function (other) {
+                if (other.hasAttribute("aria-pressed")) {
+                  other.setAttribute("aria-pressed", "false");
+                }
+              });
+              tool.setAttribute("aria-pressed", "true");
+            });
+          }
+        });
+
+        apply(stored());
+      })();
+    </script>
+  </body>
+</html>
